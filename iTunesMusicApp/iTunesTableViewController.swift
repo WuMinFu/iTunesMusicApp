@@ -15,6 +15,9 @@ class iTunesTableViewController: UIViewController ,UITableViewDataSource{
     }
     
     var songs = [Song]()
+    var artistStr : String?
+    
+    @IBOutlet weak var artistTextField: UITextField!
     
     @IBOutlet weak var itunesTableVIew: UITableView!
     
@@ -61,6 +64,29 @@ class iTunesTableViewController: UIViewController ,UITableViewDataSource{
         // Do any additional setup after loading the view, typically from a nib.
     }
     
+    @IBAction func searchButton(_ sender: Any) {
+        guard let artistTextField = artistTextField.text else{
+            return
+        }
+        artistStr = artistTextField
+        let urlStr = "https://itunes.apple.com/search?term=\(artistStr!)&media=music".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+        let url = URL(string: urlStr!)
+        let task = URLSession.shared.dataTask(with: url!) { (data, res, err) in
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            if let data = data, let songResults = try? decoder.decode(iTunesMusic.self, from: data) {
+                
+                self.songs = songResults.results
+                DispatchQueue.main.async {
+                    self.itunesTableVIew.reloadData()
+                }
+                
+            } else {
+                print("error")
+            }
+        }
+        task.resume()
+    }
     func getImage(url: URL, completion: @escaping (UIImage?) -> ()) {
         let task = URLSession.shared.dataTask(with: url) { (data, response , error) in
             if let data = data, let image = UIImage(data: data) {
